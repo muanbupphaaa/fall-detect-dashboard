@@ -23,10 +23,12 @@ const roomIcons: Record<RoomName, typeof BedDouble> = {
 export function CondoFloorplanMap({
   className,
   detailed,
+  compact,
   playbackIndex,
 }: {
   className?: string;
   detailed?: boolean;
+  compact?: boolean;
   playbackIndex?: number;
 }) {
   const {
@@ -41,7 +43,7 @@ export function CondoFloorplanMap({
     typeof playbackIndex === "number"
       ? readings[Math.min(playbackIndex, readings.length - 1)] ?? livePosition
       : livePosition;
-  const recentReadings = useMemo(() => readings.slice(-18), [readings]);
+  const recentReadings = useMemo(() => readings.slice(compact ? -10 : -18), [compact, readings]);
   const trail = useMemo(
     () =>
       recentReadings.length > 3
@@ -54,7 +56,8 @@ export function CondoFloorplanMap({
         : baselinePath,
     [recentReadings],
   );
-  const nearFalls = readings.filter((reading) => reading.near_fall).slice(-5);
+  const nearFalls = readings.filter((reading) => reading.near_fall).slice(compact ? -3 : -5);
+  const visibleHeatPoints = compact ? heatPoints.slice(-10) : heatPoints;
 
   return (
     <div
@@ -126,7 +129,7 @@ export function CondoFloorplanMap({
               </foreignObject>
               {detailed && (
                 <text x={room.label.x} y={room.label.y + 18} className="fill-slate-400 text-[10px]">
-                  risk {Math.round(risk)}% · density{" "}
+                  risk {Math.round(risk)}% - density{" "}
                   {roomRisks.find((item) => item.room === room.name)?.activity ?? 30}%
                 </text>
               )}
@@ -135,8 +138,8 @@ export function CondoFloorplanMap({
         })}
 
         <ArchitecturalDetails />
-        <HeatmapOverlay points={heatPoints} />
-        <WalkingTrailLayer points={trail} />
+        <HeatmapOverlay points={visibleHeatPoints} />
+        <WalkingTrailLayer points={trail} compact={compact} />
 
         {nearFalls.map((reading) => (
           <NearFallMarker key={reading.timestamp} reading={reading} />

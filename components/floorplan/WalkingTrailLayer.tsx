@@ -15,7 +15,13 @@ function toPath(points: PathPoint[]) {
   }, "");
 }
 
-export function WalkingTrailLayer({ points }: { points: PathPoint[] }) {
+export function WalkingTrailLayer({
+  points,
+  compact,
+}: {
+  points: PathPoint[];
+  compact?: boolean;
+}) {
   const path = toPath(points);
 
   return (
@@ -55,16 +61,22 @@ export function WalkingTrailLayer({ points }: { points: PathPoint[] }) {
           <stop offset="100%" stopColor="#38bdf8" />
         </linearGradient>
       </defs>
-      {points.map((point, index) => (
-        <g key={`${point.at}-${index}`}>
-          <circle cx={point.x} cy={point.y} r="4" fill={riskColor(point.risk)} />
-          {index % 2 === 0 && (
-            <text x={point.x + 9} y={point.y - 8} className="fill-slate-300 text-[10px]">
-              {point.at}
-            </text>
-          )}
-        </g>
-      ))}
+      {points.map((point, index) => {
+        const showLabel = compact
+          ? index === 0 || index === Math.floor(points.length / 2) || index === points.length - 1
+          : index % 2 === 0;
+
+        return (
+          <g key={`${point.at}-${index}`}>
+            <circle cx={point.x} cy={point.y} r={compact ? "3.5" : "4"} fill={riskColor(point.risk)} />
+            {showLabel && (
+              <text x={point.x + 9} y={point.y - 8} className="fill-slate-300 text-[10px]">
+                {point.at}
+              </text>
+            )}
+          </g>
+        );
+      })}
     </g>
   );
 }
