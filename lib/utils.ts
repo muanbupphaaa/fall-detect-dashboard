@@ -31,7 +31,8 @@ export function severityTone(severity: string) {
 
 export function formatClock(timestamp: string) {
   const date = new Date(timestamp);
-  return `${String(date.getUTCHours()).padStart(2, "0")}:${String(
-    date.getUTCMinutes(),
+  const bangkokDate = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return `${String(bangkokDate.getUTCHours()).padStart(2, "0")}:${String(
+    bangkokDate.getUTCMinutes(),
   ).padStart(2, "0")}`;
 }

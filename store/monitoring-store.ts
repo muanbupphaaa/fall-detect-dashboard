@@ -61,7 +61,7 @@ function derive(readings: SensorReading[]) {
     metrics: buildMetrics(readings),
     trendData: buildTrendData(readings),
     roomUsageData: buildRoomUsageData(readings),
-    hourlyActivityData: buildHourlyActivityData(),
+    hourlyActivityData: buildHourlyActivityData(readings),
     gaitData: buildGaitData(readings),
   };
 }
