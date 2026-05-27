@@ -174,14 +174,17 @@ export function CondoFloorplanMap({
 }
 
 const stepTrail = [
-  { id: "step-1", y: 24, opacity: 0.16, delay: 0.9, scale: 0.72 },
-  { id: "step-2", y: 8, opacity: 0.36, delay: 0.45, scale: 0.78 },
-  { id: "step-3", y: -8, opacity: 0.68, delay: 0, scale: 0.84 },
+  { id: "step-1", x: -4.4, y: 28, side: "left", opacity: 0.1, delay: 1.25, scale: 0.66 },
+  { id: "step-2", x: 4.4, y: 18, side: "right", opacity: 0.2, delay: 1, scale: 0.69 },
+  { id: "step-3", x: -4.1, y: 8, side: "left", opacity: 0.32, delay: 0.75, scale: 0.72 },
+  { id: "step-4", x: 4.1, y: -2, side: "right", opacity: 0.48, delay: 0.5, scale: 0.75 },
+  { id: "step-5", x: -3.8, y: -12, side: "left", opacity: 0.66, delay: 0.25, scale: 0.78 },
+  { id: "step-6", x: 3.8, y: -22, side: "right", opacity: 0.82, delay: 0, scale: 0.8 },
 ];
 
 function FootstepMarker({ rotation }: { rotation: number }) {
   return (
-    <g aria-label="ตำแหน่งคุณสมชายแบบรอยเท้า 3 ก้าวที่ค่อยๆ เลือนหาย">
+    <g aria-label="ตำแหน่งคุณสมชายแบบรอยเท้าซ้ายขวาสลับเหมือนคนเดิน">
       <motion.g
         animate={{ rotate: rotation }}
         transition={{ duration: 1.1, ease: "easeInOut" }}
@@ -190,9 +193,10 @@ function FootstepMarker({ rotation }: { rotation: number }) {
         {stepTrail.map((step) => (
           <motion.g
             key={step.id}
-            initial={{ opacity: 0, y: step.y + 7, scale: step.scale }}
+            initial={{ opacity: 0, x: step.x, y: step.y + 7, scale: step.scale }}
             animate={{
               opacity: [0, step.opacity, step.opacity * 0.58, 0],
+              x: step.x,
               y: [step.y + 7, step.y, step.y - 1.5, step.y - 3],
               scale: [step.scale * 0.96, step.scale, step.scale, step.scale * 1.02],
             }}
@@ -203,19 +207,16 @@ function FootstepMarker({ rotation }: { rotation: number }) {
               ease: "easeOut",
             }}
           >
-            <FootprintPairShape opacity={1} />
+            <FootprintShape
+              x="0"
+              y="0"
+              rotate={step.side === "left" ? "-8" : "8"}
+              opacity={1}
+              mirrored={step.side === "right"}
+            />
           </motion.g>
         ))}
       </motion.g>
-    </g>
-  );
-}
-
-function FootprintPairShape({ opacity }: { opacity: number }) {
-  return (
-    <g opacity={opacity}>
-      <FootprintShape x="-3.8" y="1" rotate="-9" opacity={1} />
-      <FootprintShape x="3.8" y="-6" rotate="9" opacity={1} mirrored />
     </g>
   );
 }
