@@ -47,10 +47,16 @@ export function CondoFloorplanMap({
       ? readings[Math.min(playbackIndex, readings.length - 1)] ?? livePosition
       : livePosition;
   const nearFalls = readings.filter((reading) => reading.near_fall).slice(compact ? -2 : -4);
+  const previousReading = readings[readings.length - 2];
   const activePoint = {
     x: clamp(activeReading.x, 58, 688),
     y: clamp(activeReading.y, 62, 426),
   };
+  const walkAngle = previousReading
+    ? (Math.atan2(activeReading.y - previousReading.y, activeReading.x - previousReading.x) * 180) /
+        Math.PI +
+      90
+    : 0;
   const visibleHeatPoints = useMemo(
     () =>
       [...riskZones, ...heatPoints]
@@ -144,14 +150,8 @@ export function CondoFloorplanMap({
           animate={{ x: activePoint.x, y: activePoint.y }}
           transition={{ duration: 3.2, ease: "easeInOut" }}
         >
-          <motion.circle
-            r="18"
-            fill="rgba(8,145,178,.14)"
-            animate={{ scale: [1, 1.35, 1], opacity: [0.42, 0.12, 0.42] }}
-            transition={{ repeat: Infinity, duration: 2.2 }}
-          />
-          <circle r="8" fill="#0891b2" stroke="#ffffff" strokeWidth="3" />
-          <foreignObject x="12" y="-30" width="108" height="30">
+          <FootstepMarker rotation={walkAngle} />
+          <foreignObject x="14" y="-34" width="108" height="30">
             <div className="inline-flex rounded-full border border-cyan-200 bg-white px-3 py-1 text-[11px] font-bold text-cyan-900 shadow-sm">
               คุณสมชาย
             </div>
@@ -170,6 +170,46 @@ export function CondoFloorplanMap({
         </div>
       )}
     </div>
+  );
+}
+
+function FootstepMarker({ rotation }: { rotation: number }) {
+  return (
+    <g aria-label="ตำแหน่งคุณสมชายแบบรอยเท้าก้าวเดิน">
+      <motion.ellipse
+        cx="0"
+        cy="2"
+        rx="22"
+        ry="18"
+        fill="rgba(8,145,178,.12)"
+        animate={{ scale: [1, 1.16, 1], opacity: [0.5, 0.22, 0.5] }}
+        transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+      />
+      <motion.g
+        animate={{ rotate: rotation }}
+        transition={{ duration: 1.1, ease: "easeInOut" }}
+        style={{ transformOrigin: "0px 0px" }}
+      >
+        <motion.g
+          animate={{ y: [-2, 1, -2], opacity: [0.72, 1, 0.72] }}
+          transition={{ repeat: Infinity, duration: 1.35, ease: "easeInOut" }}
+        >
+          <ellipse cx="-6" cy="-7" rx="4.4" ry="8.2" fill="#0f766e" transform="rotate(-16 -6 -7)" />
+          <circle cx="-10.4" cy="-17" r="1.4" fill="#0f766e" />
+          <circle cx="-7.4" cy="-18.4" r="1.35" fill="#0f766e" />
+          <circle cx="-4.4" cy="-18" r="1.25" fill="#0f766e" />
+        </motion.g>
+        <motion.g
+          animate={{ y: [1, -2, 1], opacity: [1, 0.72, 1] }}
+          transition={{ repeat: Infinity, duration: 1.35, ease: "easeInOut" }}
+        >
+          <ellipse cx="7" cy="8" rx="4.4" ry="8.2" fill="#0891b2" transform="rotate(16 7 8)" />
+          <circle cx="3.6" cy="-2" r="1.4" fill="#0891b2" />
+          <circle cx="6.6" cy="-3.6" r="1.35" fill="#0891b2" />
+          <circle cx="9.6" cy="-3.2" r="1.25" fill="#0891b2" />
+        </motion.g>
+      </motion.g>
+    </g>
   );
 }
 
