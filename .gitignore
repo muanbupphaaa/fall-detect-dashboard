@@ -1,0 +1,8 @@
+node_modules
+.next
+.env*.local
+.vercel
+out
+dist
+*.log
+dashboard-qa.png
