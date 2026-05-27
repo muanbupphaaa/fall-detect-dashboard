@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Bath, BedDouble, ChefHat, DoorOpen, Sofa, Trees, Waves } from "lucide-react";
-import { HeatmapOverlay } from "@/components/floorplan/HeatmapOverlay";
 import { NearFallMarker } from "@/components/floorplan/NearFallMarker";
 import { WalkingTrailLayer } from "@/components/floorplan/WalkingTrailLayer";
 import { baselinePath, rooms } from "@/data/floorplan";
@@ -33,7 +32,6 @@ export function CondoFloorplanMap({
 }) {
   const {
     readings,
-    heatPoints,
     livePosition,
     roomRisks,
     nightMode,
@@ -57,7 +55,6 @@ export function CondoFloorplanMap({
     [recentReadings],
   );
   const nearFalls = readings.filter((reading) => reading.near_fall).slice(compact ? -3 : -5);
-  const visibleHeatPoints = compact ? heatPoints.slice(-10) : heatPoints;
 
   return (
     <div
@@ -121,6 +118,15 @@ export function CondoFloorplanMap({
                   filter: active ? "drop-shadow(0 0 14px rgba(34,211,238,.38))" : "none",
                 }}
               />
+              <motion.path
+                d={room.d}
+                fill={riskColor(risk)}
+                initial={false}
+                animate={{
+                  opacity: active ? roomHeatOpacity(risk) + 0.1 : roomHeatOpacity(risk),
+                }}
+                style={{ mixBlendMode: "screen" }}
+              />
               <foreignObject x={room.label.x} y={room.label.y - 18} width="168" height="40">
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-100">
                   <Icon className="h-4 w-4 text-cyan-200" />
@@ -138,7 +144,6 @@ export function CondoFloorplanMap({
         })}
 
         <ArchitecturalDetails />
-        <HeatmapOverlay points={visibleHeatPoints} />
         <WalkingTrailLayer points={trail} compact={compact} />
 
         {nearFalls.map((reading) => (
@@ -174,6 +179,13 @@ export function CondoFloorplanMap({
       )}
     </div>
   );
+}
+
+function roomHeatOpacity(risk: number) {
+  if (risk >= 82) return 0.5;
+  if (risk >= 62) return 0.4;
+  if (risk >= 42) return 0.3;
+  return 0.2;
 }
 
 function ArchitecturalDetails() {
@@ -213,7 +225,7 @@ function RiskLegend() {
   return (
     <foreignObject x="466" y="32" width="220" height="44">
       <div className="rounded-lg border border-white/10 bg-slate-950/65 p-2 text-[10px] text-slate-300 backdrop-blur">
-        <div className="mb-1 font-semibold text-slate-100">Risk heatmap</div>
+        <div className="mb-1 font-semibold text-slate-100">Room risk heatmap</div>
         <div className="grid grid-cols-4 gap-1">
           <span className="rounded bg-emerald-400/30 px-1">safe</span>
           <span className="rounded bg-yellow-300/30 px-1">moderate</span>
