@@ -23,6 +23,14 @@ type SyntheticWaypoint = {
   nearFall?: boolean;
 };
 
+type LiveMovementPoint = {
+  room: RoomName;
+  x: number;
+  y: number;
+  riskBoost?: number;
+  nearFall?: boolean;
+};
+
 const syntheticDate = "2026-05-27";
 
 const syntheticDailyTimeline: SyntheticWaypoint[] = [
@@ -55,19 +63,6 @@ const syntheticDailyTimeline: SyntheticWaypoint[] = [
   { time: "11:32", room: "Living Room", point: 1 },
 ];
 
-const liveRoute: RoomName[] = [
-  "Living Room",
-  "Hallway",
-  "Kitchen",
-  "Living Room",
-  "Balcony",
-  "Living Room",
-  "Hallway",
-  "Bathroom",
-  "Hallway",
-  "Bedroom",
-];
-
 const roomRiskBias: Record<RoomName, number> = {
   Bedroom: 44,
   Bathroom: 74,
@@ -76,6 +71,33 @@ const roomRiskBias: Record<RoomName, number> = {
   Hallway: 58,
   Balcony: 42,
 };
+
+const liveMovementPath: LiveMovementPoint[] = [
+  { room: "Bedroom", x: 176, y: 154, riskBoost: 3 },
+  { room: "Bedroom", x: 228, y: 188, riskBoost: 4 },
+  { room: "Bedroom", x: 252, y: 214, riskBoost: 7 },
+  { room: "Hallway", x: 280, y: 238, riskBoost: 12 },
+  { room: "Hallway", x: 286, y: 292, riskBoost: 14 },
+  { room: "Bathroom", x: 220, y: 304, riskBoost: 22 },
+  { room: "Bathroom", x: 166, y: 344, riskBoost: 28, nearFall: true },
+  { room: "Bathroom", x: 206, y: 316, riskBoost: 22 },
+  { room: "Hallway", x: 286, y: 300, riskBoost: 13 },
+  { room: "Hallway", x: 322, y: 338, riskBoost: 10 },
+  { room: "Kitchen", x: 358, y: 334, riskBoost: 8 },
+  { room: "Kitchen", x: 430, y: 340, riskBoost: 7 },
+  { room: "Kitchen", x: 514, y: 354, riskBoost: 6 },
+  { room: "Living Room", x: 536, y: 232, riskBoost: 4 },
+  { room: "Living Room", x: 466, y: 198, riskBoost: 6 },
+  { room: "Living Room", x: 384, y: 222, riskBoost: 5 },
+  { room: "Living Room", x: 536, y: 236, riskBoost: 4 },
+  { room: "Balcony", x: 570, y: 258, riskBoost: 10 },
+  { room: "Balcony", x: 620, y: 304, riskBoost: 8 },
+  { room: "Balcony", x: 570, y: 258, riskBoost: 10 },
+  { room: "Living Room", x: 524, y: 232, riskBoost: 5 },
+  { room: "Hallway", x: 356, y: 236, riskBoost: 10 },
+  { room: "Hallway", x: 286, y: 292, riskBoost: 13 },
+  { room: "Bedroom", x: 252, y: 214, riskBoost: 7 },
+];
 
 function bangkokIso(time: string) {
   const [hour, minute] = time.split(":").map(Number);
@@ -88,17 +110,6 @@ function bangkokHour(date: Date) {
   return bangkokDate.getUTCHours();
 }
 
-function liveRoomForTime(index: number, now: Date): RoomName {
-  const hour = bangkokHour(now);
-  if (hour < 5) return ["Bedroom", "Hallway", "Bathroom", "Hallway"][index % 4] as RoomName;
-  if (hour < 7) return ["Bedroom", "Hallway", "Bathroom", "Kitchen"][index % 4] as RoomName;
-  if (hour < 11) return ["Kitchen", "Living Room", "Balcony", "Living Room", "Hallway"][index % 5] as RoomName;
-  if (hour < 14) return ["Living Room", "Kitchen", "Hallway", "Bathroom"][index % 4] as RoomName;
-  if (hour < 18) return ["Living Room", "Balcony", "Living Room", "Kitchen"][index % 4] as RoomName;
-  if (hour < 22) return ["Living Room", "Hallway", "Bathroom", "Bedroom"][index % 4] as RoomName;
-  return ["Bedroom", "Hallway", "Bathroom", "Bedroom"][index % 4] as RoomName;
-}
-
 function makeReading(
   index: number,
   room: RoomName,
@@ -106,9 +117,10 @@ function makeReading(
   riskBoost = 0,
   forcedNearFall = false,
   pointIndex = index,
+  exactPoint?: { x: number; y: number },
 ): SensorReading {
   const coordinates = roomCoordinates[room];
-  const basePoint = coordinates[pointIndex % coordinates.length];
+  const basePoint = exactPoint ?? coordinates[pointIndex % coordinates.length];
   const hour = bangkokHour(new Date(timestamp));
   const wave = Math.sin(index / 2.7);
   const fatigue = hour >= 10 ? clamp((hour - 8) * 2.1, 0, 14) : hour < 5 ? 11 : 0;
@@ -130,8 +142,8 @@ function makeReading(
   return {
     timestamp,
     room,
-    x: clamp(basePoint.x + Math.cos(index * 1.7) * 14, 54, 668),
-    y: clamp(basePoint.y + Math.sin(index * 1.2) * 12, 58, 418),
+    x: clamp(basePoint.x + Math.cos(index * 0.7) * (exactPoint ? 2.4 : 14), 54, 688),
+    y: clamp(basePoint.y + Math.sin(index * 0.6) * (exactPoint ? 2 : 12), 58, 426),
     gait_speed: clamp(1.08 - instability / 145 + Math.sin(index) * 0.05, 0.34, 1.18),
     sway: clamp(1.7 + instability / 17 + Math.cos(index / 2) * 0.42, 1.25, 8.4),
     cadence: clamp(106 - instability * 0.36 + Math.sin(index / 3) * 3.5, 62, 114),
@@ -149,9 +161,14 @@ function makeReading(
 }
 
 export function generateReading(index: number, now = new Date()): SensorReading {
-  const room = liveRoomForTime(index, now) ?? liveRoute[index % liveRoute.length];
-  const riskBoost = room === "Bathroom" ? 14 : room === "Hallway" ? 8 : 0;
-  return makeReading(index, room, now.toISOString(), riskBoost);
+  const point = liveMovementPath[index % liveMovementPath.length];
+  const hour = bangkokHour(now);
+  const nighttimeRisk = hour < 5 && ["Bathroom", "Hallway"].includes(point.room) ? 10 : 0;
+  const riskBoost =
+    (point.riskBoost ?? 0) +
+    nighttimeRisk +
+    (point.room === "Bathroom" ? 10 : point.room === "Hallway" ? 5 : 0);
+  return makeReading(index, point.room, now.toISOString(), riskBoost, point.nearFall, index, point);
 }
 
 export function seedReadings(count = syntheticDailyTimeline.length) {

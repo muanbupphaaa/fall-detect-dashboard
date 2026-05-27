@@ -11,7 +11,7 @@ export function useMockWebSocket() {
     const timer = window.setInterval(() => {
       const currentIndex = useMonitoringStore.getState().streamIndex;
       applyReading(generateReading(currentIndex, new Date()));
-    }, 1600);
+    }, 3200);
 
     return () => window.clearInterval(timer);
   }, [applyReading]);
