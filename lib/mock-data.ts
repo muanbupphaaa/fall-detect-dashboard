@@ -35,6 +35,7 @@ type LiveMovementPoint = {
 type FallDetectionStreamRecord = {
   window_start_ts: string;
   window_end_ts: string;
+  session_id: string;
   class_en: string;
   category: string;
   label: number;
@@ -216,6 +217,11 @@ function makeStreamReading(index: number, timestamp: string): SensorReading {
     record.model2_risk_level === "high" ||
     record.component_impact_event > 0.82;
   const fallDetected = record.category === "fall" || record.label === 1;
+  const alertEventKey = fallDetected
+    ? `fall:${record.session_id}`
+    : nearFall
+      ? `near:${record.session_id}`
+      : undefined;
 
   return {
     timestamp,
@@ -230,6 +236,7 @@ function makeStreamReading(index: number, timestamp: string): SensorReading {
     fall_risk: fallRisk,
     fall_detected: fallDetected,
     near_fall: nearFall,
+    alert_event_key: alertEventKey,
     ax: Number((record.component_gait_motion * 1.9 + (nearFall ? 0.7 : 0.05)).toFixed(3)),
     ay: Number((record.component_rotation_balance * 1.5).toFixed(3)),
     az: Number((0.92 + record.component_posture_transition * 0.38).toFixed(3)),
@@ -449,8 +456,16 @@ function alertSeverityFromRisk(risk: number): CareAlert["severity"] {
 }
 
 function buildInitialStreamAlerts(): CareAlert[] {
+  const seenEvents = new Set<string>();
+
   return seedReadings(48)
     .filter((reading) => reading.fall_detected || reading.near_fall || reading.fall_risk >= 58)
+    .filter((reading) => {
+      const eventKey = reading.alert_event_key ?? `${reading.timestamp}-${reading.room}-${reading.fall_risk}`;
+      if (seenEvents.has(eventKey)) return false;
+      seenEvents.add(eventKey);
+      return true;
+    })
     .slice(-6)
     .reverse()
     .map((reading, index) => ({
@@ -464,6 +479,7 @@ function buildInitialStreamAlerts(): CareAlert[] {
       room: reading.room,
       timestamp: formatClock(reading.timestamp),
       acknowledged: false,
+      eventKey: reading.alert_event_key,
     }));
 }
 

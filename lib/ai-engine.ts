@@ -20,6 +20,14 @@ export function analyzeReading(
   const nighttime = hour >= 22 || hour <= 5;
   const severity = severityFromRisk(reading.fall_risk);
   const idSuffix = `${reading.timestamp}-${reading.room}`;
+  const alertWasSent = Boolean(
+    reading.alert_event_key &&
+      previous.some((item) => item.alert_event_key === reading.alert_event_key),
+  );
+
+  if (alertWasSent) {
+    return {};
+  }
 
   if (reading.fall_detected) {
     return {
@@ -40,6 +48,7 @@ export function analyzeReading(
         room: reading.room,
         timestamp: formatClock(reading.timestamp),
         acknowledged: false,
+        eventKey: reading.alert_event_key,
       },
     };
   }
@@ -63,6 +72,7 @@ export function analyzeReading(
         room: reading.room,
         timestamp: formatClock(reading.timestamp),
         acknowledged: false,
+        eventKey: reading.alert_event_key,
       },
     };
   }

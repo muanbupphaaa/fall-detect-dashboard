@@ -21,6 +21,7 @@ export interface SensorReading {
   fall_risk: number;
   fall_detected: boolean;
   near_fall: boolean;
+  alert_event_key?: string;
   ax: number;
   ay: number;
   az: number;
@@ -46,6 +47,7 @@ export interface CareAlert {
   room: RoomName;
   timestamp: string;
   acknowledged: boolean;
+  eventKey?: string;
 }
 
 export interface RoomRisk {
