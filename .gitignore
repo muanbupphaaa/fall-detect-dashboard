@@ -6,3 +6,6 @@ out
 dist
 *.log
 dashboard-qa.png
+
+.vercel
+.env*

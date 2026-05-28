@@ -110,7 +110,7 @@ export function CondoFloorplanMap({
   compact?: boolean;
   playbackIndex?: number;
 }) {
-  const { readings, heatPoints, livePosition, roomRisks, nightMode } =
+  const { readings, heatPoints, livePosition, roomRisks } =
     useMonitoringStore();
   const [hoveredRoom, setHoveredRoom] = useState<RoomName | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<RoomName | null>(null);
@@ -139,7 +139,6 @@ export function CondoFloorplanMap({
       <div
         className={cn(
           "relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_55px_rgba(15,23,42,0.12)]",
-          nightMode && "bg-slate-50",
           className,
         )}
       >
@@ -206,7 +205,7 @@ export function CondoFloorplanMap({
               <motion.path
                 d={room.d}
                 fill={room.name === "Balcony" ? "rgba(224,242,254,.48)" : "rgba(255,255,255,.26)"}
-                stroke={active ? riskColor(risk) : "rgba(15,23,42,.62)"}
+                stroke={active ? "#0891b2" : "rgba(15,23,42,.62)"}
                 strokeWidth={active ? 3 : 1.4}
               />
               <foreignObject x={room.label.x} y={room.label.y - 24} width="176" height="40">
