@@ -47,7 +47,7 @@ export default function MainDashboardPage() {
       <Card>
         <CardContent className="grid gap-4 p-4 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <div className="text-sm text-slate-400">สรุปวันนี้</div>
+            <div className="text-sm font-bold text-slate-700">สรุปวันนี้</div>
             <h2 className="mt-1 text-2xl font-semibold">
               {metrics.riskScore >= 70
                 ? "ควรให้ผู้ดูแลเข้าไปดู"
@@ -55,7 +55,7 @@ export default function MainDashboardPage() {
                   ? "มีความเสี่ยงปานกลาง ควรคอยสังเกต"
                   : "ตอนนี้ค่อนข้างปลอดภัย"}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-700">
               ห้องที่ควรระวังคือ {topRooms.map((room) => roomLabelThai(room.room)).join(", ")}
               แผนที่แสดง heatmap ความเสี่ยงและจุดเคลื่อนไหวล่าสุดแบบ realtime
             </p>
@@ -69,7 +69,7 @@ export default function MainDashboardPage() {
           <CardHeader className="flex-row items-start justify-between gap-4">
             <div>
               <CardTitle>แผนที่คอนโดแบบ Heatmap</CardTitle>
-              <p className="mt-1 text-sm text-slate-300">
+              <p className="mt-1 text-sm font-semibold text-slate-700">
                 สีแดงคือเสี่ยงสูง สีเขียวคือปกติ และจุดคือการเคลื่อนไหวล่าสุด
               </p>
             </div>
@@ -131,16 +131,16 @@ export default function MainDashboardPage() {
               {topRooms.map((room, index) => (
                 <div
                   key={room.room}
-                  className="rounded-lg border border-white/10 bg-white/[0.035] p-3"
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-3"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Badge variant={index === 0 ? "danger" : "soft"}>
                         #{index + 1}
                       </Badge>
-                      <span className="font-medium">{roomLabelThai(room.room)}</span>
+                      <span className="font-bold text-slate-950">{roomLabelThai(room.room)}</span>
                     </div>
-                    <span className="text-sm text-slate-300">เสี่ยง {room.risk}%</span>
+                    <span className="text-sm font-bold text-slate-700">เสี่ยง {room.risk}%</span>
                   </div>
                   <div className="mt-3 h-2 rounded-full bg-slate-800">
                     <div
@@ -161,14 +161,14 @@ export default function MainDashboardPage() {
           <CardHeader>
             <CardTitle>สิ่งที่ควรดู</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-3 text-sm text-slate-300 md:grid-cols-3">
-            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+          <CardContent className="grid gap-3 text-sm font-semibold text-slate-800 md:grid-cols-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               ห้องน้ำและทางเดินเป็นจุดที่ต้องระวังมากที่สุด
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               ช่วงกลางคืนมีโอกาสเดินไม่มั่นคงมากขึ้น
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               ดูรายละเอียดเพิ่มเติมได้ในหน้าแจ้งเตือนและวิเคราะห์
             </div>
           </CardContent>

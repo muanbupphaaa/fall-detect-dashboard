@@ -38,9 +38,9 @@ export function RiskScoreCard({
           <div className={cn("rounded-lg bg-gradient-to-br p-2", tones[tone])}>
             <Icon className="h-5 w-5" />
           </div>
-          <span className="text-xs text-slate-500">{detail}</span>
+          <span className="text-xs font-semibold text-slate-700">{detail}</span>
         </div>
-        <div className="mt-4 text-sm font-semibold text-slate-600">{label}</div>
+        <div className="mt-4 text-sm font-bold text-slate-700">{label}</div>
         <div className="mt-1 flex items-end justify-between gap-3">
           <div className="text-3xl font-semibold tracking-normal text-slate-950">{value}</div>
           <div className="pb-1 text-xs font-semibold text-slate-700">{progressLabel}</div>
