@@ -130,14 +130,15 @@ export function CondoFloorplanMap({
   );
 
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_55px_rgba(15,23,42,0.12)]",
-        nightMode && "bg-slate-50",
-        className,
-      )}
-    >
-      <svg
+    <div>
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_55px_rgba(15,23,42,0.12)]",
+          nightMode && "bg-slate-50",
+          className,
+        )}
+      >
+        <svg
         viewBox="0 0 760 500"
         className="h-full min-h-[inherit] w-full"
         role="img"
@@ -254,16 +255,17 @@ export function CondoFloorplanMap({
         ))}
 
         <RiskLegend />
-      </svg>
+        </svg>
 
-      {hoveredRoom && (
-        <div className="pointer-events-none absolute left-5 top-5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-lg">
-          <span className="font-extrabold">{roomThai[hoveredRoom]}</span>
-          <span className="ml-2 font-semibold text-slate-700">
-            เสี่ยง {roomRisks.find((room) => room.room === hoveredRoom)?.risk}%
-          </span>
-        </div>
-      )}
+        {hoveredRoom && (
+          <div className="pointer-events-none absolute left-5 top-5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-lg">
+            <span className="font-extrabold">{roomThai[hoveredRoom]}</span>
+            <span className="ml-2 font-semibold text-slate-700">
+              เสี่ยง {roomRisks.find((room) => room.room === hoveredRoom)?.risk}%
+            </span>
+          </div>
+        )}
+      </div>
 
       {selectedRoom && (
         <RoomGuidancePanel
@@ -404,8 +406,8 @@ function RoomGuidancePanel({
         <span>ความเสี่ยงห้องนี้</span>
         <div className="h-2 flex-1 rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-500"
-            style={{ width: `${risk}%` }}
+            className="h-full rounded-full"
+            style={{ width: `${risk}%`, backgroundColor: riskColor(risk) }}
           />
         </div>
         <span className="text-slate-950">{risk}%</span>

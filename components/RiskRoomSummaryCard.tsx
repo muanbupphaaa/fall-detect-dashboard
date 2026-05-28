@@ -5,7 +5,7 @@ import { ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoomRisk } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, riskColor } from "@/lib/utils";
 
 interface RiskRoomSummaryCardProps {
   riskScore: number;
@@ -66,7 +66,8 @@ export function RiskRoomSummaryCard({
               </div>
               <div className="mt-3 h-2 rounded-full bg-slate-900">
                 <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-500"
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: riskColor(room.risk) }}
                   initial={{ width: 0 }}
                   animate={{ width: `${room.risk}%` }}
                   transition={{ type: "spring", stiffness: 80, damping: 18, delay: index * 0.04 }}
