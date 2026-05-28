@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 178 42% 97%;
+    --foreground: 216 24% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 216 24% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 24% 14%;
+    --primary: 177 63% 28%;
+    --primary-foreground: 180 60% 98%;
+    --secondary: 202 42% 92%;
+    --secondary-foreground: 209 35% 20%;
+    --muted: 180 22% 92%;
+    --muted-foreground: 210 10% 42%;
+    --accent: 39 92% 55%;
+    --accent-foreground: 35 55% 15%;
+    --destructive: 3 80% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 190 24% 84%;
+    --input: 190 24% 84%;
+    --ring: 177 63% 28%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 214 31% 8%;
+    --foreground: 180 22% 94%;
+    --card: 214 25% 12%;
+    --card-foreground: 180 22% 94%;
+    --popover: 214 25% 12%;
+    --popover-foreground: 180 22% 94%;
+    --primary: 176 55% 58%;
+    --primary-foreground: 190 52% 9%;
+    --secondary: 211 23% 18%;
+    --secondary-foreground: 180 22% 94%;
+    --muted: 212 21% 18%;
+    --muted-foreground: 205 13% 68%;
+    --accent: 39 92% 58%;
+    --accent-foreground: 35 55% 12%;
+    --destructive: 2 75% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 18% 24%;
+    --input: 210 18% 24%;
+    --ring: 176 55% 58%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer utilities {
+  .health-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.38) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.38) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+}
