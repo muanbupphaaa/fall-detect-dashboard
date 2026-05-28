@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Footprints } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { CondoFloorplanMap } from "@/components/floorplan/CondoFloorplanMap";
 import { LiveMonitoringBadge } from "@/components/LiveMonitoringBadge";
 import { RealtimeAlertPanel } from "@/components/RealtimeAlertPanel";
@@ -68,13 +68,6 @@ export default function MainDashboardPage() {
           />
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-            <RiskScoreCard
-              label="การเดิน"
-              value={metrics.mobilityScore}
-              icon={Footprints}
-              tone="safe"
-              detail="คะแนนการเคลื่อนไหว"
-            />
             <RiskScoreCard
               label="เกือบล้ม"
               value={metrics.nearFallCount}
