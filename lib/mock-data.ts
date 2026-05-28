@@ -1,4 +1,5 @@
 import { baselinePath, riskZones, roomCoordinates } from "@/data/floorplan";
+import fallDetectionStream from "@/data/fall-detection-stream.json";
 import {
   AIInsight,
   CareAlert,
@@ -29,6 +30,21 @@ type LiveMovementPoint = {
   y: number;
   riskBoost?: number;
   nearFall?: boolean;
+};
+
+type FallDetectionStreamRecord = {
+  class_en: string;
+  category: string;
+  label: number;
+  model2_risk_score: number;
+  model2_high_risk_probability: number;
+  model2_risk_level: string;
+  rule_feature_risk_score: number;
+  component_gait_motion: number;
+  component_rotation_balance: number;
+  component_posture_transition: number;
+  component_impact_event: number;
+  component_physio_stress: number;
 };
 
 const syntheticDate = "2026-05-27";
@@ -99,6 +115,85 @@ const liveMovementPath: LiveMovementPoint[] = [
   { room: "Bedroom", x: 252, y: 214, riskBoost: 7 },
 ];
 
+const streamClassRooms: Record<string, RoomName> = {
+  standing: "Bedroom",
+  lying_down: "Bedroom",
+  normal_walk: "Living Room",
+  corrected_walking: "Hallway",
+  limping_walk: "Hallway",
+  elderly_pick_up_object: "Kitchen",
+  stand_sit_alternating: "Living Room",
+  slow_collapse_fall: "Bathroom",
+  gradual_fall: "Bathroom",
+  backward_fall: "Hallway",
+  sideways_fall: "Bathroom",
+};
+
+const streamData = fallDetectionStream as FallDetectionStreamRecord[];
+
+function roomForStreamRecord(record: FallDetectionStreamRecord) {
+  return streamClassRooms[record.class_en] ?? (record.category === "fall" ? "Bathroom" : "Hallway");
+}
+
+function pointForStreamRecord(record: FallDetectionStreamRecord, index: number) {
+  const room = roomForStreamRecord(record);
+  const coordinates = roomCoordinates[room];
+  const basePoint = coordinates[index % coordinates.length];
+  const drift = Math.sin(index * 0.74) * 7;
+
+  return {
+    room,
+    x: clamp(basePoint.x + drift, 54, 688),
+    y: clamp(basePoint.y + Math.cos(index * 0.62) * 6, 58, 426),
+  };
+}
+
+function makeStreamReading(index: number, timestamp: string): SensorReading {
+  const record = streamData[index % streamData.length];
+  const point = pointForStreamRecord(record, index);
+  const modelRisk = clamp(record.model2_risk_score * 100, 3, 99);
+  const highRiskProbability = clamp(record.model2_high_risk_probability * 100, 0, 100);
+  const fallRisk = clamp(
+    record.category === "fall" || record.label === 1
+      ? Math.max(modelRisk, highRiskProbability)
+      : modelRisk,
+    3,
+    99,
+  );
+  const instability = clamp(
+    record.rule_feature_risk_score * 70 +
+      record.component_gait_motion * 16 +
+      record.component_rotation_balance * 22 +
+      record.component_posture_transition * 18,
+    8,
+    98,
+  );
+  const nearFall =
+    record.category === "fall" ||
+    record.model2_risk_level === "high" ||
+    record.component_impact_event > 0.82;
+
+  return {
+    timestamp,
+    room: point.room,
+    x: point.x,
+    y: point.y,
+    gait_speed: clamp(1.12 - record.component_gait_motion * 0.5 - fallRisk / 220, 0.28, 1.18),
+    sway: clamp(1.3 + record.component_rotation_balance * 5.2 + fallRisk / 30, 1.1, 8.8),
+    cadence: clamp(110 - record.component_gait_motion * 34 - fallRisk * 0.25, 58, 116),
+    turning_velocity: clamp(104 - record.component_rotation_balance * 54 - fallRisk * 0.34, 22, 106),
+    instability_score: instability,
+    fall_risk: fallRisk,
+    near_fall: nearFall,
+    ax: Number((record.component_gait_motion * 1.9 + (nearFall ? 0.7 : 0.05)).toFixed(3)),
+    ay: Number((record.component_rotation_balance * 1.5).toFixed(3)),
+    az: Number((0.92 + record.component_posture_transition * 0.38).toFixed(3)),
+    gx: Number((record.component_rotation_balance * 70 + instability / 10).toFixed(3)),
+    gy: Number((record.component_posture_transition * 58).toFixed(3)),
+    gz: Number((record.component_impact_event * 86 + (nearFall ? 18 : 0)).toFixed(3)),
+  };
+}
+
 function bangkokIso(time: string) {
   const [hour, minute] = time.split(":").map(Number);
   const [year, month, day] = syntheticDate.split("-").map(Number);
@@ -161,6 +256,10 @@ function makeReading(
 }
 
 export function generateReading(index: number, now = new Date()): SensorReading {
+  if (streamData.length > 0) {
+    return makeStreamReading(index, now.toISOString());
+  }
+
   const point = liveMovementPath[index % liveMovementPath.length];
   const hour = bangkokHour(now);
   const nighttimeRisk = hour < 5 && ["Bathroom", "Hallway"].includes(point.room) ? 10 : 0;
@@ -172,6 +271,18 @@ export function generateReading(index: number, now = new Date()): SensorReading 
 }
 
 export function seedReadings(count = syntheticDailyTimeline.length) {
+  if (streamData.length > 0) {
+    const seedCount = Math.min(count, streamData.length);
+    const now = Date.now();
+
+    return Array.from({ length: seedCount }, (_, index) =>
+      makeStreamReading(
+        index,
+        new Date(now - (seedCount - index) * 3200).toISOString(),
+      ),
+    );
+  }
+
   return syntheticDailyTimeline.slice(-count).map((event, index) =>
     makeReading(
       index,
@@ -313,7 +424,33 @@ export const initialInsights: AIInsight[] = [
   },
 ];
 
-export const initialAlerts: CareAlert[] = [
+function alertSeverityFromRisk(risk: number): CareAlert["severity"] {
+  if (risk >= 90) return "emergency";
+  if (risk >= 78) return "high";
+  if (risk >= 58) return "medium";
+  return "low";
+}
+
+function buildInitialStreamAlerts(): CareAlert[] {
+  return seedReadings(48)
+    .filter((reading) => reading.near_fall || reading.fall_risk >= 58)
+    .slice(-6)
+    .reverse()
+    .map((reading, index) => ({
+      id: `stream-alert-${index}-${reading.timestamp}`,
+      message: reading.near_fall
+        ? "Near-fall event detected"
+        : reading.room === "Bathroom"
+          ? "High instability detected in bathroom"
+          : "Abnormal gait pattern detected",
+      severity: reading.near_fall ? "emergency" : alertSeverityFromRisk(reading.fall_risk),
+      room: reading.room,
+      timestamp: formatClock(reading.timestamp),
+      acknowledged: false,
+    }));
+}
+
+const fallbackInitialAlerts: CareAlert[] = [
   {
     id: "seed-alert-bath",
     message: "High instability detected in bathroom",
@@ -339,6 +476,10 @@ export const initialAlerts: CareAlert[] = [
     acknowledged: true,
   },
 ];
+
+export const initialAlerts: CareAlert[] = streamData.length
+  ? buildInitialStreamAlerts()
+  : fallbackInitialAlerts;
 
 export function baselineTrailReadings() {
   return baselinePath.map((point, index) => ({

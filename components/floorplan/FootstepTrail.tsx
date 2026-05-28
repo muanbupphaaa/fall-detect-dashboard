@@ -10,15 +10,17 @@ import {
 interface FootstepTrailProps {
   path: MovementPathPoint[];
   compact?: boolean;
+  followLivePath?: boolean;
 }
 
-export function FootstepTrail({ path, compact }: FootstepTrailProps) {
+export function FootstepTrail({ path, compact, followLivePath }: FootstepTrailProps) {
   const steps = useWalkingTrailAnimation(path, {
-    stepIntervalMs: compact ? 760 : 700,
-    maxVisibleSteps: compact ? 6 : 8,
-    strideLength: compact ? 30 : 28,
+    stepIntervalMs: compact ? 680 : 620,
+    maxVisibleSteps: compact ? 14 : 18,
+    strideLength: compact ? 22 : 20,
     stepOffset: compact ? 5.8 : 6.2,
-    footprintLifetimeMs: compact ? 4200 : 4600,
+    footprintLifetimeMs: compact ? 5400 : 6200,
+    resetOnPathChange: !followLivePath,
   });
 
   return (
@@ -61,25 +63,27 @@ function FootprintMarker({
   const opacity = 0.26 + ageRatio * 0.68;
 
   return (
-    <motion.g
+    <g
       data-footstep-marker="true"
       data-footstep-side={step.side}
-      initial={{ opacity: 0, scale: 0.42 }}
-      animate={{
-        opacity: [0, opacity, opacity * 0.86, 0],
-        scale: [0.25, 1.18, 0.96, 0.58],
-      }}
-      transition={{
-        opacity: { duration: 4.15, times: [0, 0.1, 0.68, 1], ease: "easeOut" },
-        scale: { duration: 4.15, times: [0, 0.1, 0.72, 1], ease: "easeOut" },
-      }}
-      style={{
-        transformBox: "fill-box",
-        transformOrigin: "center",
-      }}
       transform={`translate(${step.x} ${step.y}) rotate(${step.angle + 90})`}
       filter="url(#footstep-soft-glow)"
     >
+      <motion.g
+        initial={{ opacity: 0, scale: 0.42 }}
+        animate={{
+          opacity: [0, opacity, opacity, opacity * 0.72, 0],
+          scale: [0.72, 1, 1, 0.98, 0.94],
+        }}
+        transition={{
+          opacity: { duration: 5.4, times: [0, 0.08, 0.78, 0.9, 1], ease: "linear" },
+          scale: { duration: 5.4, times: [0, 0.08, 0.78, 0.9, 1], ease: "linear" },
+        }}
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "center",
+        }}
+      >
       <motion.ellipse
         cx="0"
         cy="0"
@@ -87,8 +91,6 @@ function FootprintMarker({
         ry="14"
         fill="#0ea5e9"
         opacity="0.24"
-        animate={{ opacity: [0.12, 0.28, 0.12], scale: [0.9, 1.2, 0.9] }}
-        transition={{ duration: 1.45, repeat: Infinity, ease: "easeInOut" }}
       />
       <g transform={`translate(${isLeft ? -1.4 : 1.4} 0) scale(${isLeft ? -1 : 1} 1)`}>
         <path
@@ -102,7 +104,8 @@ function FootprintMarker({
         <circle cx="4.9" cy="-14.6" r="1.85" fill="#020617" opacity="0.62" />
         <circle cx="8.2" cy="-12.2" r="1.55" fill="#020617" opacity="0.55" />
       </g>
-    </motion.g>
+      </motion.g>
+    </g>
   );
 }
 

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Bath, BedDouble, ChefHat, DoorOpen, Sofa, Trees, Waves } from "lucide-react";
+import { FootstepTrail } from "@/components/floorplan/FootstepTrail";
 import { HeatmapOverlay } from "@/components/floorplan/HeatmapOverlay";
 import { NearFallMarker } from "@/components/floorplan/NearFallMarker";
 import { riskZones, rooms } from "@/data/floorplan";
@@ -41,9 +42,9 @@ const roomGuidance: Record<
     focus: "ช่วงลุกจากเตียงและยืนทรงตัวตอนเช้า",
     walking: "มักเป็นการเดินช้า ก้าวสั้น และมีจังหวะหยุดก่อนออกจากห้อง",
     activities: [
-      { code: "D01", label: "Walking slowly" },
-      { code: "D07", label: "Sit slowly / stand up slowly" },
-      { code: "D12", label: "Lie slowly" },
+      { code: "D01", label: "เดินช้า" },
+      { code: "D07", label: "นั่งหรือยืนขึ้นช้า" },
+      { code: "D12", label: "นอนลงช้า" },
     ],
     cautions: ["ระวังข้างเตียง", "เปิดไฟก่อนลุก", "เก็บของบนพื้นให้โล่ง"],
   },
@@ -51,9 +52,9 @@ const roomGuidance: Record<
     focus: "พื้นเปียก การหมุนตัว และการเข้าออกประตู",
     walking: "มักเดินช้า ก้าวระวัง และมีการหมุนตัวแคบใกล้สุขภัณฑ์",
     activities: [
-      { code: "D01", label: "Walking slowly" },
-      { code: "D18", label: "Stumble" },
-      { code: "F04", label: "Forward trip fall risk" },
+      { code: "D01", label: "เดินช้า" },
+      { code: "D18", label: "สะดุด" },
+      { code: "F04", label: "เสี่ยงสะดุดล้มไปข้างหน้า" },
     ],
     cautions: ["ระวังพื้นลื่น", "จับราวพยุงก่อนหมุนตัว", "เช็ดพื้นเปียกทันที"],
   },
@@ -61,9 +62,9 @@ const roomGuidance: Record<
     focus: "ทางแคบ จุดเลี้ยว และการเดินตอนกลางคืน",
     walking: "พบการเดินช้า สลับหยุด และอาจมีการเสียจังหวะเมื่อเลี้ยว",
     activities: [
-      { code: "D01", label: "Walking slowly" },
-      { code: "D02", label: "Walking quickly" },
-      { code: "D18", label: "Stumble" },
+      { code: "D01", label: "เดินช้า" },
+      { code: "D02", label: "เดินเร็ว" },
+      { code: "D18", label: "สะดุด" },
     ],
     cautions: ["ระวังมุมเลี้ยว", "เปิดไฟทางเดิน", "อย่าวางของกีดขวาง"],
   },
@@ -71,9 +72,9 @@ const roomGuidance: Record<
     focus: "ขอบเคาน์เตอร์ การเอื้อมหยิบของ และพื้นต่างระดับเล็กน้อย",
     walking: "มักเดินช้าใกล้เคาน์เตอร์และมีการหยุดยืนเพื่อหยิบของ",
     activities: [
-      { code: "D01", label: "Walking slowly" },
-      { code: "D16", label: "Bend without knees" },
-      { code: "D18", label: "Stumble" },
+      { code: "D01", label: "เดินช้า" },
+      { code: "D16", label: "ก้มโดยไม่ย่อเข่า" },
+      { code: "D18", label: "สะดุด" },
     ],
     cautions: ["ระวังขอบเคาน์เตอร์", "หลีกเลี่ยงการเอื้อมไกล", "เช็ดคราบน้ำ/น้ำมัน"],
   },
@@ -81,9 +82,9 @@ const roomGuidance: Record<
     focus: "การลุกนั่งจากโซฟาและการเดินอ้อมเฟอร์นิเจอร์",
     walking: "มักมีการเดินช้าแล้วหยุดนั่ง หรือเปลี่ยนท่าลุกนั่งซ้ำ",
     activities: [
-      { code: "D07", label: "Sit slowly" },
-      { code: "D08", label: "Sit quickly" },
-      { code: "D11", label: "Try stand then collapse to chair" },
+      { code: "D07", label: "นั่งช้า" },
+      { code: "D08", label: "นั่งเร็ว" },
+      { code: "D11", label: "พยายามยืนแล้วทรุดลงเก้าอี้" },
     ],
     cautions: ["ระวังขอบโต๊ะ", "ลุกช้า ๆ จากโซฟา", "วางรีโมต/ของใช้ใกล้มือ"],
   },
@@ -91,9 +92,9 @@ const roomGuidance: Record<
     focus: "ธรณีประตู แสงต่างระดับ และพื้นภายนอก",
     walking: "มักมีการชะลอก่อนก้าวข้ามธรณี และก้าวสั้นบริเวณทางออก",
     activities: [
-      { code: "D01", label: "Walking slowly" },
-      { code: "D05", label: "Upstairs/downstairs slowly" },
-      { code: "D18", label: "Stumble" },
+      { code: "D01", label: "เดินช้า" },
+      { code: "D05", label: "ขึ้นลงต่างระดับช้า" },
+      { code: "D18", label: "สะดุด" },
     ],
     cautions: ["ระวังธรณีประตู", "เช็กพื้นเปียก", "ใช้รองเท้ากันลื่น"],
   },
@@ -126,6 +127,13 @@ export function CondoFloorplanMap({
         .filter((point, index, all) => index === all.findIndex((item) => item.id === point.id))
         .slice(compact ? -14 : -22),
     [compact, heatPoints],
+  );
+  const liveFootstepPath = useMemo(
+    () =>
+      readings
+        .slice(compact ? -10 : -14)
+        .map((reading) => ({ x: reading.x, y: reading.y })),
+    [compact, readings],
   );
 
   return (
@@ -226,6 +234,7 @@ export function CondoFloorplanMap({
 
         <HeatmapOverlay points={visibleHeatPoints} />
         <ArchitecturalDetails />
+        <FootstepTrail path={liveFootstepPath} compact={compact} followLivePath />
         {nearFalls.map((reading) => (
           <NearFallMarker key={reading.timestamp} reading={reading} />
         ))}
@@ -392,7 +401,7 @@ function RoomGuidancePanel({
                 key={activity.code}
                 className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-extrabold text-slate-800"
               >
-                {activity.code} · {activity.label}
+                {activity.label}
               </span>
             ))}
           </div>
