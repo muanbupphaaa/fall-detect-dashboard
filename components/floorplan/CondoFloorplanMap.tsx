@@ -121,7 +121,7 @@ export function CondoFloorplanMap({
   const visibleHeatPoints = useMemo(
     () =>
       heatPoints
-        .filter((point) => point.intensity >= 62)
+        .filter((point) => point.intensity >= 48)
         .filter((point, index, all) => index === all.findIndex((item) => item.id === point.id))
         .slice(compact ? -14 : -22),
     [compact, heatPoints],
