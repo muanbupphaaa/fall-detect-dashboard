@@ -9,20 +9,21 @@ import { severityTone } from "@/lib/utils";
 
 export function RealtimeAlertPanel({ alerts }: { alerts: CareAlert[] }) {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle>แจ้งเตือนล่าสุด</CardTitle>
         <BellRing className="h-4 w-4 text-cyan-600" />
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="max-h-[312px] space-y-3 overflow-y-auto overflow-x-hidden pr-2 scroll-smooth overscroll-contain">
         <AnimatePresence initial={false}>
           {alerts.map((alert) => (
             <motion.div
               key={alert.id}
               layout
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -18 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
               className={`rounded-lg border p-3 ${severityTone(alert.severity)}`}
             >
               <div className="flex items-start justify-between gap-2">

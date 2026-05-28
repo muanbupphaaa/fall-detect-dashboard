@@ -64,7 +64,7 @@ export function RiskRoomSummaryCard({
                 </div>
                 <span className="text-sm font-extrabold text-slate-800">เสี่ยง {room.risk}%</span>
               </div>
-              <div className="mt-3 h-2 rounded-full bg-slate-900">
+              <div className="mt-3 h-2 rounded-full border border-slate-200 bg-white">
                 <motion.div
                   className="h-full rounded-full"
                   style={{ backgroundColor: riskColor(room.risk) }}
