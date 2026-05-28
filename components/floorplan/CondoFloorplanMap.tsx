@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Bath, BedDouble, ChefHat, DoorOpen, Sofa, Trees, Waves } from "lucide-react";
-import { FootstepTrail, sampleMovementPath } from "@/components/floorplan/FootstepTrail";
 import { HeatmapOverlay } from "@/components/floorplan/HeatmapOverlay";
 import { NearFallMarker } from "@/components/floorplan/NearFallMarker";
 import { riskZones, rooms } from "@/data/floorplan";
@@ -227,8 +226,6 @@ export function CondoFloorplanMap({
 
         <HeatmapOverlay points={visibleHeatPoints} />
         <ArchitecturalDetails />
-        <FootstepTrail path={sampleMovementPath} compact={compact} />
-
         {nearFalls.map((reading) => (
           <NearFallMarker key={reading.timestamp} reading={reading} />
         ))}

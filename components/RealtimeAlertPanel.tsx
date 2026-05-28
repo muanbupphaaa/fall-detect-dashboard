@@ -14,32 +14,34 @@ export function RealtimeAlertPanel({ alerts }: { alerts: CareAlert[] }) {
         <CardTitle>แจ้งเตือนล่าสุด</CardTitle>
         <BellRing className="h-4 w-4 text-cyan-600" />
       </CardHeader>
-      <CardContent className="max-h-[312px] space-y-3 overflow-y-auto overflow-x-hidden pr-2 scroll-smooth overscroll-contain">
-        <AnimatePresence initial={false}>
-          {alerts.map((alert) => (
-            <motion.div
-              key={alert.id}
-              layout
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className={`rounded-lg border p-3 ${severityTone(alert.severity)}`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="font-medium">{alertMessageThai(alert.message)}</div>
-                  <div className="mt-1 text-xs opacity-75">
-                    {roomThai(alert.room)} - {alert.timestamp}
+      <CardContent className="overflow-hidden">
+        <div className="max-h-[288px] space-y-3 overflow-y-auto overflow-x-hidden pr-2 scroll-smooth overscroll-contain [scrollbar-gutter:stable]">
+          <AnimatePresence initial={false}>
+            {alerts.map((alert) => (
+              <motion.div
+                key={alert.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className={`rounded-lg border p-3 ${severityTone(alert.severity)}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-medium">{alertMessageThai(alert.message)}</div>
+                    <div className="mt-1 text-xs opacity-75">
+                      {roomThai(alert.room)} - {alert.timestamp}
+                    </div>
                   </div>
+                  <Badge variant={alert.severity === "emergency" ? "danger" : "soft"}>
+                    {severityThai(alert.severity)}
+                  </Badge>
                 </div>
-                <Badge variant={alert.severity === "emergency" ? "danger" : "soft"}>
-                  {severityThai(alert.severity)}
-                </Badge>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </CardContent>
     </Card>
   );
