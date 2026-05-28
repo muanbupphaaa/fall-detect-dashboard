@@ -209,12 +209,6 @@ export function CondoFloorplanMap({
                 stroke={active ? riskColor(risk) : "rgba(15,23,42,.62)"}
                 strokeWidth={active ? 3 : 1.4}
               />
-              <motion.path
-                d={room.d}
-                fill={riskColor(risk)}
-                initial={false}
-                animate={{ opacity: active ? roomHeatOpacity(risk) + 0.05 : roomHeatOpacity(risk) }}
-              />
               <foreignObject x={room.label.x} y={room.label.y - 24} width="176" height="40">
                 <div className="flex w-fit items-center gap-2 rounded-md bg-white/88 px-3 py-1.5 text-[13px] font-extrabold text-slate-950 shadow-sm ring-1 ring-slate-200">
                   <Icon className="h-4 w-4 text-slate-700" />
@@ -277,13 +271,6 @@ export function CondoFloorplanMap({
       )}
     </div>
   );
-}
-
-function roomHeatOpacity(risk: number) {
-  if (risk >= 82) return 0.2;
-  if (risk >= 62) return 0.16;
-  if (risk >= 42) return 0.1;
-  return 0.05;
 }
 
 function ArchitecturalDetails() {
