@@ -2,7 +2,6 @@
 
 import { AlertTriangle, Footprints } from "lucide-react";
 import { CondoFloorplanMap } from "@/components/floorplan/CondoFloorplanMap";
-import { CurrentActionCard } from "@/components/CurrentActionCard";
 import { LiveMonitoringBadge } from "@/components/LiveMonitoringBadge";
 import { RealtimeAlertPanel } from "@/components/RealtimeAlertPanel";
 import { RiskRoomSummaryCard } from "@/components/RiskRoomSummaryCard";
@@ -91,8 +90,6 @@ export default function MainDashboardPage() {
           </div>
 
           <RealtimeAlertPanel alerts={alerts.slice(0, 3)} />
-
-          <CurrentActionCard />
 
         </div>
       </section>
