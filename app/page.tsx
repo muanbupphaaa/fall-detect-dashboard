@@ -2,7 +2,6 @@
 
 import { AlertTriangle, Footprints } from "lucide-react";
 import { CondoFloorplanMap } from "@/components/floorplan/CondoFloorplanMap";
-import { AIInsightCard } from "@/components/AIInsightCard";
 import { CurrentActionCard } from "@/components/CurrentActionCard";
 import { LiveMonitoringBadge } from "@/components/LiveMonitoringBadge";
 import { RealtimeAlertPanel } from "@/components/RealtimeAlertPanel";
@@ -17,7 +16,6 @@ import { formatClock } from "@/lib/utils";
 export default function MainDashboardPage() {
   const {
     alerts,
-    insights,
     metrics,
     readings,
     roomRisks,
@@ -25,7 +23,6 @@ export default function MainDashboardPage() {
   } = useMonitoringStore();
 
   const topRooms = [...roomRisks].sort((a, b) => b.risk - a.risk).slice(0, 3);
-  const primaryInsight = insights[0];
   const latestNearFall = [...readings].reverse().find((reading) => reading.near_fall);
   const nearFallDetail = latestNearFall
     ? `ล่าสุด ${formatClock(latestNearFall.timestamp)} · ${roomLabelThai(latestNearFall.room)}`
@@ -46,7 +43,6 @@ export default function MainDashboardPage() {
             </h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-700">
               ห้องที่ควรระวังคือ {topRooms.map((room) => roomLabelThai(room.room)).join(", ")}
-              แผนที่แสดง heatmap ความเสี่ยงและจุดเคลื่อนไหวล่าสุดแบบ realtime
             </p>
           </div>
           <LiveMonitoringBadge />
@@ -99,23 +95,6 @@ export default function MainDashboardPage() {
           <CurrentActionCard />
 
         </div>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[.9fr_1.1fr]">
-        {primaryInsight && <AIInsightCard insight={primaryInsight} />}
-        <Card>
-          <CardHeader>
-            <CardTitle>สิ่งที่ควรดู</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-sm font-semibold text-slate-800 md:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              ห้องน้ำและทางเดินเป็นจุดที่ต้องระวังมากที่สุด
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              ช่วงกลางคืนมีโอกาสเดินไม่มั่นคงมากขึ้น
-            </div>
-          </CardContent>
-        </Card>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
