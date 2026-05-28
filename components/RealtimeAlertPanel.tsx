@@ -15,7 +15,7 @@ export function RealtimeAlertPanel({ alerts }: { alerts: CareAlert[] }) {
         <BellRing className="h-4 w-4 text-cyan-600" />
       </CardHeader>
       <CardContent className="overflow-hidden">
-        <div className="max-h-[288px] space-y-3 overflow-y-auto overflow-x-hidden pr-2 scroll-smooth overscroll-contain [scrollbar-gutter:stable]">
+        <div className="h-[288px] space-y-3 overflow-y-auto overflow-x-hidden pr-2 scroll-smooth snap-y snap-mandatory overscroll-contain [scrollbar-gutter:stable]">
           <AnimatePresence initial={false}>
             {alerts.map((alert) => (
               <motion.div
@@ -24,8 +24,8 @@ export function RealtimeAlertPanel({ alerts }: { alerts: CareAlert[] }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className={`rounded-lg border p-3 ${severityTone(alert.severity)}`}
+                transition={{ layout: { duration: 0.45, ease: "easeInOut" }, opacity: { duration: 0.24 }, y: { duration: 0.32 } }}
+                className={`min-h-[88px] snap-start rounded-lg border p-3 ${severityTone(alert.severity)}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>

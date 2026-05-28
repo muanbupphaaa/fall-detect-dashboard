@@ -16,9 +16,6 @@ export default function AlertsPage() {
           <CardTitle className="text-2xl font-bold text-slate-950">
             ประวัติการแจ้งเตือน
           </CardTitle>
-          <p className="text-sm font-medium text-slate-700">
-            แสดงเหตุการณ์ล่าสุดที่ผู้ดูแลควรรับทราบ เรียงจากใหม่ไปเก่า
-          </p>
         </CardHeader>
         <CardContent className="space-y-3 p-5">
           {alerts.map((alert) => (
