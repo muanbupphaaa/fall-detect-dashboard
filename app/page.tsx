@@ -12,6 +12,7 @@ import { MobilityTrendChart } from "@/components/charts/MobilityTrendChart";
 import { StabilityChart } from "@/components/charts/StabilityChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMonitoringStore } from "@/store/monitoring-store";
+import { formatClock } from "@/lib/utils";
 
 const fallTypeCodes = [
   { code: "F01", meaning: "Forward slip fall", thai: "ลื่นล้มไปข้างหน้า" },
@@ -36,12 +37,17 @@ export default function MainDashboardPage() {
     alerts,
     insights,
     metrics,
+    readings,
     roomRisks,
     trendData,
   } = useMonitoringStore();
 
   const topRooms = [...roomRisks].sort((a, b) => b.risk - a.risk).slice(0, 3);
   const primaryInsight = insights[0];
+  const latestNearFall = [...readings].reverse().find((reading) => reading.near_fall);
+  const nearFallDetail = latestNearFall
+    ? `ล่าสุด ${formatClock(latestNearFall.timestamp)} · ${roomLabelThai(latestNearFall.room)}`
+    : "ยังไม่พบเหตุการณ์วันนี้";
 
   return (
     <div className="space-y-5">
@@ -101,6 +107,7 @@ export default function MainDashboardPage() {
               icon={AlertTriangle}
               tone="warning"
               detail="ใน 24 ชม."
+              subDetail={nearFallDetail}
               max={10}
             />
           </div>

@@ -17,6 +17,7 @@ export function RiskScoreCard({
   value,
   icon: Icon,
   detail,
+  subDetail,
   tone = "care",
   max = 100,
 }: {
@@ -24,6 +25,7 @@ export function RiskScoreCard({
   value: number;
   icon: LucideIcon;
   detail: string;
+  subDetail?: string;
   tone?: keyof typeof tones;
   max?: number;
 }) {
@@ -41,6 +43,11 @@ export function RiskScoreCard({
           <span className="text-xs font-semibold text-slate-700">{detail}</span>
         </div>
         <div className="mt-4 text-sm font-bold text-slate-700">{label}</div>
+        {subDetail && (
+          <div className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs font-extrabold text-amber-950">
+            {subDetail}
+          </div>
+        )}
         <div className="mt-1 flex items-end justify-between gap-3">
           <div className="text-3xl font-semibold tracking-normal text-slate-950">{value}</div>
           <div className="pb-1 text-xs font-semibold text-slate-700">{progressLabel}</div>
