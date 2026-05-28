@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <BrainCircuit className="h-6 w-6" />
           </div>
           <div>
-            <div className="font-semibold leading-tight text-slate-950">AegisCare Home</div>
+            <div className="font-semibold leading-tight text-slate-950">Dulae</div>
             <div className="text-xs text-slate-500">ระบบดูแลความเสี่ยงล้ม</div>
           </div>
         </Link>

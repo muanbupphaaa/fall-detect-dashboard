@@ -1,4 +1,4 @@
-# Elderly Fall Risk Monitoring Dashboard
+# Dulae
 
 A production-ready mock web application for AI-powered ambient wellness monitoring inside a condominium. It uses a real SVG condo-style floorplan, simulated IMU sensor streams, room-aware fall-risk inference, caregiver alerts, and mobility analytics.
 
