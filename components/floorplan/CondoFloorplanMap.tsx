@@ -4,10 +4,9 @@ import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Bath, BedDouble, ChefHat, DoorOpen, Sofa, Trees, Waves } from "lucide-react";
 import { FootstepTrail } from "@/components/floorplan/FootstepTrail";
-import { HeatAlertMarker } from "@/components/floorplan/HeatAlertMarker";
 import { HeatmapOverlay } from "@/components/floorplan/HeatmapOverlay";
 import { rooms } from "@/data/floorplan";
-import { HeatPoint, RoomName } from "@/lib/types";
+import { RoomName } from "@/lib/types";
 import { cn, riskColor } from "@/lib/utils";
 import { useMonitoringStore } from "@/store/monitoring-store";
 
@@ -127,10 +126,6 @@ export function CondoFloorplanMap({
         .slice(compact ? -14 : -22),
     [compact, heatPoints],
   );
-  const redHeatPoints = useMemo(
-    () => clusterRedHeatPoints(visibleHeatPoints.filter((point) => point.intensity >= 82)),
-    [visibleHeatPoints],
-  );
   const liveFootstepPath = useMemo(
     () =>
       readings
@@ -238,9 +233,6 @@ export function CondoFloorplanMap({
         <HeatmapOverlay points={visibleHeatPoints} />
         <ArchitecturalDetails />
         <FootstepTrail path={liveFootstepPath} compact={compact} followLivePath />
-        {redHeatPoints.map((point) => (
-          <HeatAlertMarker key={point.id} point={point} />
-        ))}
 
         {rooms.map((room) => (
           <path
@@ -292,42 +284,6 @@ function roomHeatOpacity(risk: number) {
   if (risk >= 62) return 0.16;
   if (risk >= 42) return 0.1;
   return 0.05;
-}
-
-function clusterRedHeatPoints(points: HeatPoint[]) {
-  const clusters: HeatPoint[][] = [];
-
-  points.forEach((point) => {
-    const cluster = clusters.find((items) =>
-      items.some((item) => {
-        const distance = Math.hypot(point.x - item.x, point.y - item.y);
-        const touchDistance = Math.min(point.radius, item.radius) * 1.55;
-        return distance <= touchDistance;
-      }),
-    );
-
-    if (cluster) {
-      cluster.push(point);
-      return;
-    }
-
-    clusters.push([point]);
-  });
-
-  return clusters.map((cluster) => {
-    const totalIntensity = cluster.reduce((sum, point) => sum + point.intensity, 0) || 1;
-    const strongest = cluster.reduce(
-      (best, point) => (point.intensity > best.intensity ? point : best),
-      cluster[0],
-    );
-
-    return {
-      ...strongest,
-      id: `red-cluster-${cluster.map((point) => point.id).join("-")}`,
-      x: cluster.reduce((sum, point) => sum + point.x * point.intensity, 0) / totalIntensity,
-      y: cluster.reduce((sum, point) => sum + point.y * point.intensity, 0) / totalIntensity,
-    };
-  });
 }
 
 function ArchitecturalDetails() {
