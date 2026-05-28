@@ -357,7 +357,7 @@ function RoomGuidancePanel({
       initial={{ opacity: 0, y: 12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.22 }}
-      className="absolute bottom-5 left-5 right-5 z-20 rounded-2xl border border-slate-200 bg-white/96 p-4 text-slate-950 shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur"
+      className="mt-4 rounded-2xl border border-slate-200 bg-white/96 p-4 text-slate-950 shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
