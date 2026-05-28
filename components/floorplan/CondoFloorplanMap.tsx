@@ -6,7 +6,7 @@ import { Bath, BedDouble, ChefHat, DoorOpen, Sofa, Trees, Waves } from "lucide-r
 import { FootstepTrail } from "@/components/floorplan/FootstepTrail";
 import { HeatmapOverlay } from "@/components/floorplan/HeatmapOverlay";
 import { NearFallMarker } from "@/components/floorplan/NearFallMarker";
-import { riskZones, rooms } from "@/data/floorplan";
+import { rooms } from "@/data/floorplan";
 import { RoomName } from "@/lib/types";
 import { cn, riskColor } from "@/lib/utils";
 import { useMonitoringStore } from "@/store/monitoring-store";
@@ -122,7 +122,7 @@ export function CondoFloorplanMap({
   const nearFalls = readings.filter((reading) => reading.near_fall).slice(compact ? -2 : -4);
   const visibleHeatPoints = useMemo(
     () =>
-      [...riskZones, ...heatPoints]
+      heatPoints
         .filter((point) => point.intensity >= 62)
         .filter((point, index, all) => index === all.findIndex((item) => item.id === point.id))
         .slice(compact ? -14 : -22),

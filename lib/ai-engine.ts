@@ -44,36 +44,13 @@ export function analyzeReading(
     };
   }
 
-  if (reading.room === "Bathroom" && reading.fall_risk > 70) {
-    return {
-      insight: {
-        id: `insight-bath-${idSuffix}`,
-        title: "Instability increased near bathroom",
-        detail:
-          "Bathroom risk is elevated by slower gait speed, higher sway, and wet-zone proximity. The model recommends caregiver awareness.",
-        confidence: 89,
-        severity,
-        room: "Bathroom",
-        createdAt: formatClock(reading.timestamp),
-      },
-      alert: {
-        id: `alert-bath-${idSuffix}`,
-        message: "High instability detected in bathroom",
-        severity,
-        room: "Bathroom",
-        timestamp: formatClock(reading.timestamp),
-        acknowledged: false,
-      },
-    };
-  }
-
   if (nighttime && reading.instability_score > 55) {
     return {
       insight: {
         id: `insight-night-${idSuffix}`,
         title: "Nighttime gait instability detected",
         detail:
-          "Night walking shows reduced cadence and increased path deviation along the bedroom-to-bathroom route.",
+          "Night walking shows reduced cadence and increased path deviation in the current stream.",
         confidence: 87,
         severity: "high",
         room: reading.room,

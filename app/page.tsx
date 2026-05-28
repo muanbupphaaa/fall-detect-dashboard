@@ -18,7 +18,10 @@ export default function MainDashboardPage() {
     roomRisks,
   } = useMonitoringStore();
 
-  const topRooms = [...roomRisks].sort((a, b) => b.risk - a.risk).slice(0, 3);
+  const topRooms = [...roomRisks]
+    .filter((room) => room.risk > 0 || room.activity > 0)
+    .sort((a, b) => b.risk - a.risk)
+    .slice(0, 3);
   const latestNearFall = [...readings].reverse().find((reading) => reading.near_fall);
   const nearFallDetail = latestNearFall
     ? `ล่าสุด ${formatClock(latestNearFall.timestamp)} · ${roomLabelThai(latestNearFall.room)}`

@@ -1,4 +1,4 @@
-import { baselinePath, riskZones, roomCoordinates } from "@/data/floorplan";
+import { baselinePath, roomCoordinates } from "@/data/floorplan";
 import fallDetectionStream from "@/data/fall-detection-stream.json";
 import {
   AIInsight,
@@ -33,6 +33,8 @@ type LiveMovementPoint = {
 };
 
 type FallDetectionStreamRecord = {
+  window_start_ts: string;
+  window_end_ts: string;
   class_en: string;
   category: string;
   label: number;
@@ -115,51 +117,92 @@ const liveMovementPath: LiveMovementPoint[] = [
   { room: "Bedroom", x: 252, y: 214, riskBoost: 7 },
 ];
 
-const streamClassRooms: Record<string, RoomName> = {
-  standing: "Bedroom",
-  lying_down: "Bedroom",
-  normal_walk: "Living Room",
-  corrected_walking: "Hallway",
-  limping_walk: "Hallway",
-  elderly_pick_up_object: "Kitchen",
-  stand_sit_alternating: "Living Room",
-  slow_collapse_fall: "Bathroom",
-  gradual_fall: "Bathroom",
-  backward_fall: "Hallway",
-  sideways_fall: "Bathroom",
-};
-
 const streamData = fallDetectionStream as FallDetectionStreamRecord[];
+const streamRoom: RoomName = "Living Room";
+const livingRoomWalkingRoute = [
+  { x: 404, y: 198 },
+  { x: 452, y: 178 },
+  { x: 518, y: 196 },
+  { x: 550, y: 238 },
+  { x: 496, y: 246 },
+  { x: 430, y: 228 },
+];
 
-function roomForStreamRecord(record: FallDetectionStreamRecord) {
-  return streamClassRooms[record.class_en] ?? (record.category === "fall" ? "Bathroom" : "Hallway");
+function streamDurationSeconds(record: FallDetectionStreamRecord) {
+  const start = Date.parse(record.window_start_ts);
+  const end = Date.parse(record.window_end_ts);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 1;
+  return clamp((end - start) / 1000, 0.2, 4);
 }
 
-function pointForStreamRecord(record: FallDetectionStreamRecord, index: number) {
-  const room = roomForStreamRecord(record);
-  const coordinates = roomCoordinates[room];
-  const basePoint = coordinates[index % coordinates.length];
-  const drift = Math.sin(index * 0.74) * 7;
-
-  return {
-    room,
-    x: clamp(basePoint.x + drift, 54, 688),
-    y: clamp(basePoint.y + Math.cos(index * 0.62) * 6, 58, 426),
-  };
-}
-
-function makeStreamReading(index: number, timestamp: string): SensorReading {
-  const record = streamData[index % streamData.length];
-  const point = pointForStreamRecord(record, index);
+function streamFallRisk(record: FallDetectionStreamRecord) {
   const modelRisk = clamp(record.model2_risk_score * 100, 3, 99);
   const highRiskProbability = clamp(record.model2_high_risk_probability * 100, 0, 100);
-  const fallRisk = clamp(
+  return clamp(
     record.category === "fall" || record.label === 1
       ? Math.max(modelRisk, highRiskProbability)
       : modelRisk,
     3,
     99,
   );
+}
+
+function streamGaitSpeed(record: FallDetectionStreamRecord) {
+  return clamp(1.12 - record.component_gait_motion * 0.5 - streamFallRisk(record) / 220, 0.28, 1.18);
+}
+
+const routeSegments = livingRoomWalkingRoute.map((point, index) => {
+  const next = livingRoomWalkingRoute[(index + 1) % livingRoomWalkingRoute.length];
+  const length = Math.hypot(next.x - point.x, next.y - point.y);
+  return { point, next, length };
+});
+
+const routeLength = routeSegments.reduce((sum, segment) => sum + segment.length, 0);
+
+const streamCumulativeDistances = streamData.reduce<number[]>((distances, record, index) => {
+  const previous = index === 0 ? 0 : distances[index - 1];
+  distances.push(previous + streamGaitSpeed(record) * streamDurationSeconds(record));
+  return distances;
+}, []);
+
+function pointOnLivingRoomRoute(distanceMeters: number) {
+  const pixelsPerMeter = 28;
+  let distance = (distanceMeters * pixelsPerMeter) % routeLength;
+
+  for (const segment of routeSegments) {
+    if (distance <= segment.length) {
+      const progress = segment.length === 0 ? 0 : distance / segment.length;
+      return {
+        x: segment.point.x + (segment.next.x - segment.point.x) * progress,
+        y: segment.point.y + (segment.next.y - segment.point.y) * progress,
+      };
+    }
+
+    distance -= segment.length;
+  }
+
+  return livingRoomWalkingRoute[0];
+}
+
+function pointForStreamRecord(record: FallDetectionStreamRecord, index: number) {
+  const cycle = Math.floor(index / Math.max(1, streamData.length));
+  const streamIndex = index % Math.max(1, streamData.length);
+  const streamDistance = streamCumulativeDistances[streamIndex] ?? 0;
+  const cycleDistance = (streamCumulativeDistances[streamCumulativeDistances.length - 1] ?? 0) * cycle;
+  const point = pointOnLivingRoomRoute(streamDistance + cycleDistance);
+  const riskDrift = record.category === "fall" ? 0 : Math.sin(index * 0.5) * 2;
+
+  return {
+    room: streamRoom,
+    x: clamp(point.x + riskDrift, 54, 688),
+    y: clamp(point.y + Math.cos(index * 0.42) * 2, 58, 426),
+  };
+}
+
+function makeStreamReading(index: number, timestamp: string): SensorReading {
+  const record = streamData[index % streamData.length];
+  const point = pointForStreamRecord(record, index);
+  const fallRisk = streamFallRisk(record);
   const instability = clamp(
     record.rule_feature_risk_score * 70 +
       record.component_gait_motion * 16 +
@@ -178,7 +221,7 @@ function makeStreamReading(index: number, timestamp: string): SensorReading {
     room: point.room,
     x: point.x,
     y: point.y,
-    gait_speed: clamp(1.12 - record.component_gait_motion * 0.5 - fallRisk / 220, 0.28, 1.18),
+    gait_speed: streamGaitSpeed(record),
     sway: clamp(1.3 + record.component_rotation_balance * 5.2 + fallRisk / 30, 1.1, 8.8),
     cadence: clamp(110 - record.component_gait_motion * 34 - fallRisk * 0.25, 58, 116),
     turning_velocity: clamp(104 - record.component_rotation_balance * 54 - fallRisk * 0.34, 22, 106),
@@ -299,31 +342,33 @@ export function buildRoomRisks(readings: SensorReading[]): RoomRisk[] {
   const rooms = Object.keys(roomRiskBias) as RoomName[];
   return rooms.map((room) => {
     const roomReadings = readings.filter((reading) => reading.room === room).slice(-18);
+    const hasRoomData = roomReadings.length > 0;
     const averageRisk =
       roomReadings.reduce((sum, reading) => sum + reading.fall_risk, 0) /
-        Math.max(1, roomReadings.length) || roomRiskBias[room];
+        Math.max(1, roomReadings.length) || (streamData.length > 0 ? 0 : roomRiskBias[room]);
     const instability =
       roomReadings.reduce((sum, reading) => sum + reading.instability_score, 0) /
-        Math.max(1, roomReadings.length) || roomRiskBias[room];
+        Math.max(1, roomReadings.length) || (streamData.length > 0 ? 0 : roomRiskBias[room]);
     return {
       room,
-      risk: Math.round(clamp(averageRisk, 18, 98)),
-      activity: Math.round(clamp(roomReadings.length * 11 + averageRisk * 0.25, 18, 99)),
-      instability: Math.round(clamp(instability, 18, 98)),
+      risk: Math.round(hasRoomData ? clamp(averageRisk, 3, 98) : 0),
+      activity: Math.round(hasRoomData ? clamp(roomReadings.length * 11 + averageRisk * 0.25, 3, 99) : 0),
+      instability: Math.round(hasRoomData ? clamp(instability, 3, 98) : 0),
     };
   });
 }
 
 export function buildHeatPoints(readings: SensorReading[]): HeatPoint[] {
-  const latest = readings.slice(-12).map((reading, index) => ({
-    id: `live-${reading.room}-${index}`,
+  const riskReadings = readings.filter((reading) => reading.near_fall || reading.fall_risk >= 58);
+  const latest = riskReadings.slice(-16).map((reading, index) => ({
+    id: `stream-risk-${reading.timestamp}-${index}`,
     x: reading.x,
     y: reading.y,
     radius: clamp(34 + reading.fall_risk * 0.55, 42, 82),
     intensity: reading.fall_risk,
     room: reading.room,
   }));
-  return [...riskZones, ...latest].slice(-18);
+  return latest;
 }
 
 export function buildMetrics(readings: SensorReading[]): MonitoringMetrics {
@@ -391,38 +436,7 @@ export function buildGaitData(readings: SensorReading[]): GaitDatum[] {
   }));
 }
 
-export const initialInsights: AIInsight[] = [
-  {
-    id: "seed-bathroom",
-    title: "Instability increased near bathroom",
-    detail:
-      "Wet-zone proximity and low-speed turns are contributing to an elevated bathroom risk score.",
-    confidence: 91,
-    severity: "high",
-    room: "Bathroom",
-    createdAt: "07:24",
-  },
-  {
-    id: "seed-turning",
-    title: "Turning stability decreased this week",
-    detail:
-      "Cadence remains acceptable, but turn recovery is slower around the hallway transition.",
-    confidence: 84,
-    severity: "medium",
-    room: "Hallway",
-    createdAt: "07:31",
-  },
-  {
-    id: "seed-night",
-    title: "Nighttime gait instability detected",
-    detail:
-      "The bedroom-to-bathroom route shows higher gait variability during low-light periods.",
-    confidence: 88,
-    severity: "high",
-    room: "Bedroom",
-    createdAt: "02:18",
-  },
-];
+export const initialInsights: AIInsight[] = [];
 
 function alertSeverityFromRisk(risk: number): CareAlert["severity"] {
   if (risk >= 90) return "emergency";
@@ -440,9 +454,7 @@ function buildInitialStreamAlerts(): CareAlert[] {
       id: `stream-alert-${index}-${reading.timestamp}`,
       message: reading.near_fall
         ? "Near-fall event detected"
-        : reading.room === "Bathroom"
-          ? "High instability detected in bathroom"
-          : "Abnormal gait pattern detected",
+        : "Abnormal gait pattern detected",
       severity: reading.near_fall ? "emergency" : alertSeverityFromRisk(reading.fall_risk),
       room: reading.room,
       timestamp: formatClock(reading.timestamp),
