@@ -10,7 +10,6 @@ import {
   buildRoomRisks,
   buildRoomUsageData,
   buildTrendData,
-  initialAlerts,
   initialInsights,
   seedReadings,
 } from "@/lib/mock-data";
@@ -28,6 +27,25 @@ import {
 } from "@/lib/types";
 
 const seededReadings = seedReadings();
+const stableInitialReading: SensorReading = {
+  ...seededReadings[seededReadings.length - 1],
+  gait_speed: 1.05,
+  sway: 1.4,
+  cadence: 106,
+  turning_velocity: 96,
+  instability_score: 12,
+  fall_risk: 8,
+  fall_detected: false,
+  near_fall: false,
+  alert_event_key: undefined,
+  ax: 0.18,
+  ay: 0.04,
+  az: 1,
+  gx: 2.2,
+  gy: 0.8,
+  gz: 1.4,
+};
+const initialReadings = [stableInitialReading];
 
 interface MonitoringState {
   readings: SensorReading[];
@@ -67,14 +85,14 @@ function derive(readings: SensorReading[]) {
 }
 
 export const useMonitoringStore = create<MonitoringState>((set, get) => ({
-  readings: seededReadings,
-  alerts: initialAlerts,
+  readings: initialReadings,
+  alerts: [],
   insights: initialInsights,
-  streamIndex: seededReadings.length,
-  playbackIndex: seededReadings.length - 1,
+  streamIndex: 0,
+  playbackIndex: 0,
   nightMode: false,
   notificationOpen: false,
-  ...derive(seededReadings),
+  ...derive(initialReadings),
   applyReading: (reading) => {
     const previous = get().readings;
     const readings = [...previous, reading].slice(-80);

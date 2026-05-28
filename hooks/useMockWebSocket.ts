@@ -6,6 +6,8 @@ import type { RoomName, SensorReading } from "@/lib/types";
 import { useMonitoringStore } from "@/store/monitoring-store";
 
 const MODEL2_API_URL = process.env.NEXT_PUBLIC_MODEL2_API_URL ?? "http://localhost:8000";
+const FALL_ALERT_DELAY_MS = 30_000;
+const LIVE_TICK_MS = 3_200;
 const validRooms: RoomName[] = ["Bedroom", "Bathroom", "Kitchen", "Living Room", "Hallway", "Balcony"];
 
 type ApiReading = Partial<SensorReading> & {
@@ -67,11 +69,65 @@ async function fetchLiveReading(): Promise<SensorReading | null> {
   }
 }
 
+function buildNormalWalkingReading(index: number, now = new Date()): SensorReading {
+  const reading = generateReading(index, now);
+
+  return {
+    ...reading,
+    gait_speed: Math.max(0.96, reading.gait_speed),
+    sway: Math.min(2.2, reading.sway),
+    cadence: Math.max(102, reading.cadence),
+    turning_velocity: Math.max(88, reading.turning_velocity),
+    instability_score: Math.min(24, reading.instability_score),
+    fall_risk: Math.min(18, reading.fall_risk),
+    fall_detected: false,
+    near_fall: false,
+    alert_event_key: undefined,
+    ax: 0.16 + (index % 3) * 0.03,
+    ay: 0.03 + (index % 2) * 0.02,
+    az: 0.98,
+    gx: 2.2 + (index % 4) * 0.35,
+    gy: 0.8,
+    gz: 1.4,
+  };
+}
+
+function buildFallAlertReading(): SensorReading {
+  const { livePosition } = useMonitoringStore.getState();
+  const timestamp = new Date().toISOString();
+
+  return {
+    ...livePosition,
+    timestamp,
+    gait_speed: 0,
+    sway: 8.8,
+    cadence: 0,
+    turning_velocity: 18,
+    instability_score: 98,
+    fall_risk: 98,
+    fall_detected: true,
+    near_fall: true,
+    alert_event_key: `demo-fall-${timestamp}`,
+    ax: 2.4,
+    ay: 1.8,
+    az: 0.42,
+    gx: 82,
+    gy: 64,
+    gz: 110,
+  };
+}
+
 export function useMockWebSocket() {
   const applyReading = useMonitoringStore((state) => state.applyReading);
 
   useEffect(() => {
     let active = true;
+    let timer: number | undefined;
+
+    function normalTick() {
+      const currentIndex = useMonitoringStore.getState().streamIndex;
+      applyReading(buildNormalWalkingReading(currentIndex, new Date()));
+    }
 
     async function tick() {
       const currentIndex = useMonitoringStore.getState().streamIndex;
@@ -80,14 +136,22 @@ export function useMockWebSocket() {
       applyReading(liveReading ?? generateReading(currentIndex, new Date()));
     }
 
-    void tick();
-    const timer = window.setInterval(() => {
-      void tick();
-    }, 3200);
+    normalTick();
+    timer = window.setInterval(normalTick, LIVE_TICK_MS);
+
+    const fallTimer = window.setTimeout(() => {
+      if (!active) return;
+      if (timer) window.clearInterval(timer);
+      applyReading(buildFallAlertReading());
+      timer = window.setInterval(() => {
+        void tick();
+      }, LIVE_TICK_MS);
+    }, FALL_ALERT_DELAY_MS);
 
     return () => {
       active = false;
-      window.clearInterval(timer);
+      window.clearTimeout(fallTimer);
+      if (timer) window.clearInterval(timer);
     };
   }, [applyReading]);
 }
