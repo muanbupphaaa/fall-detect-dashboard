@@ -21,6 +21,29 @@ export function analyzeReading(
   const severity = severityFromRisk(reading.fall_risk);
   const idSuffix = `${reading.timestamp}-${reading.room}`;
 
+  if (reading.fall_detected) {
+    return {
+      insight: {
+        id: `insight-fall-${idSuffix}`,
+        title: "Fall event detected",
+        detail:
+          "The stream window is labeled as a fall event and should be treated as an urgent caregiver alert.",
+        confidence: 96,
+        severity: "emergency",
+        room: reading.room,
+        createdAt: formatClock(reading.timestamp),
+      },
+      alert: {
+        id: `alert-fall-${idSuffix}`,
+        message: "Fall event detected",
+        severity: "emergency",
+        room: reading.room,
+        timestamp: formatClock(reading.timestamp),
+        acknowledged: false,
+      },
+    };
+  }
+
   if (reading.near_fall) {
     return {
       insight: {

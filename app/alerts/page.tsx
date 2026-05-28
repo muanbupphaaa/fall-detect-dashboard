@@ -83,6 +83,7 @@ function alertTone(severity: string) {
 }
 
 function alertMessageThai(message: string) {
+  if (message.includes("Fall event")) return "ตรวจพบการล้ม";
   if (message.includes("Near-fall")) return "มีเหตุการณ์เกือบล้ม";
   if (message.includes("bathroom")) return "เสี่ยงสูงในห้องน้ำ";
   if (message.includes("gait")) return "เดินไม่มั่นคง";

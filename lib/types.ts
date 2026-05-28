@@ -19,6 +19,7 @@ export interface SensorReading {
   turning_velocity: number;
   instability_score: number;
   fall_risk: number;
+  fall_detected: boolean;
   near_fall: boolean;
   ax: number;
   ay: number;

@@ -215,6 +215,7 @@ function makeStreamReading(index: number, timestamp: string): SensorReading {
     record.category === "fall" ||
     record.model2_risk_level === "high" ||
     record.component_impact_event > 0.82;
+  const fallDetected = record.category === "fall" || record.label === 1;
 
   return {
     timestamp,
@@ -227,6 +228,7 @@ function makeStreamReading(index: number, timestamp: string): SensorReading {
     turning_velocity: clamp(104 - record.component_rotation_balance * 54 - fallRisk * 0.34, 22, 106),
     instability_score: instability,
     fall_risk: fallRisk,
+    fall_detected: fallDetected,
     near_fall: nearFall,
     ax: Number((record.component_gait_motion * 1.9 + (nearFall ? 0.7 : 0.05)).toFixed(3)),
     ay: Number((record.component_rotation_balance * 1.5).toFixed(3)),
@@ -288,6 +290,7 @@ function makeReading(
     turning_velocity: clamp(94 - instability * 0.64 + Math.cos(index / 3) * 7, 24, 104),
     instability_score: instability,
     fall_risk: fallRisk,
+    fall_detected: false,
     near_fall: nearFall,
     ax: Number((Math.sin(index) * 0.34 + (nearFall ? 1.55 : 0.08)).toFixed(3)),
     ay: Number((Math.cos(index / 1.6) * 0.26 + (hour < 5 ? 0.08 : 0)).toFixed(3)),
@@ -447,15 +450,17 @@ function alertSeverityFromRisk(risk: number): CareAlert["severity"] {
 
 function buildInitialStreamAlerts(): CareAlert[] {
   return seedReadings(48)
-    .filter((reading) => reading.near_fall || reading.fall_risk >= 58)
+    .filter((reading) => reading.fall_detected || reading.near_fall || reading.fall_risk >= 58)
     .slice(-6)
     .reverse()
     .map((reading, index) => ({
       id: `stream-alert-${index}-${reading.timestamp}`,
-      message: reading.near_fall
-        ? "Near-fall event detected"
-        : "Abnormal gait pattern detected",
-      severity: reading.near_fall ? "emergency" : alertSeverityFromRisk(reading.fall_risk),
+      message: reading.fall_detected
+        ? "Fall event detected"
+        : reading.near_fall
+          ? "Near-fall event detected"
+          : "Abnormal gait pattern detected",
+      severity: reading.fall_detected || reading.near_fall ? "emergency" : alertSeverityFromRisk(reading.fall_risk),
       room: reading.room,
       timestamp: formatClock(reading.timestamp),
       acknowledged: false,
