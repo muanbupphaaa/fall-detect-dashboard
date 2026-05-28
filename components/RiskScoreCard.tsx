@@ -20,6 +20,7 @@ export function RiskScoreCard({
   subDetail,
   tone = "care",
   max = 100,
+  showProgress = true,
 }: {
   label: string;
   value: number;
@@ -28,6 +29,7 @@ export function RiskScoreCard({
   subDetail?: string;
   tone?: keyof typeof tones;
   max?: number;
+  showProgress?: boolean;
 }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   const barColor = progressColor(pct, tone);
@@ -50,23 +52,27 @@ export function RiskScoreCard({
         )}
         <div className="mt-1 flex items-end justify-between gap-3">
           <div className="text-3xl font-semibold tracking-normal text-slate-950">{value}</div>
-          <div className="pb-1 text-xs font-semibold text-slate-700">{progressLabel}</div>
+          {showProgress && (
+            <div className="pb-1 text-xs font-semibold text-slate-700">{progressLabel}</div>
+          )}
         </div>
-        <div
-          className="mt-4 h-2 rounded-full bg-slate-100"
-          role="progressbar"
-          aria-label={label}
-          aria-valuemin={0}
-          aria-valuemax={max}
-          aria-valuenow={value}
-        >
-          <motion.div
-            className={cn("h-full rounded-full", barColor)}
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ type: "spring", stiffness: 80, damping: 18 }}
-          />
-        </div>
+        {showProgress && (
+          <div
+            className="mt-4 h-2 rounded-full bg-slate-100"
+            role="progressbar"
+            aria-label={label}
+            aria-valuemin={0}
+            aria-valuemax={max}
+            aria-valuenow={value}
+          >
+            <motion.div
+              className={cn("h-full rounded-full", barColor)}
+              initial={{ width: 0 }}
+              animate={{ width: `${pct}%` }}
+              transition={{ type: "spring", stiffness: 80, damping: 18 }}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

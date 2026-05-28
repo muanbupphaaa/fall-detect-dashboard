@@ -369,16 +369,57 @@ export function buildRoomRisks(readings: SensorReading[]): RoomRisk[] {
 }
 
 export function buildHeatPoints(readings: SensorReading[]): HeatPoint[] {
-  const riskReadings = readings.filter((reading) => reading.near_fall || reading.fall_risk >= 58);
-  const latest = riskReadings.slice(-16).map((reading, index) => ({
-    id: `stream-risk-${reading.timestamp}-${index}`,
-    x: reading.x,
-    y: reading.y,
-    radius: clamp(34 + reading.fall_risk * 0.55, 42, 82),
-    intensity: reading.fall_risk,
-    room: reading.room,
-  }));
-  return latest;
+  const uniqueEvents = new Map<string, SensorReading>();
+
+  readings
+    .filter((reading) => reading.fall_detected || reading.near_fall)
+    .forEach((reading) => {
+      const key = reading.alert_event_key ?? `${reading.timestamp}-${reading.room}`;
+      const existing = uniqueEvents.get(key);
+
+      if (!existing || reading.fall_risk > existing.fall_risk) {
+        uniqueEvents.set(key, reading);
+      }
+    });
+
+  const clusters: SensorReading[][] = [];
+
+  Array.from(uniqueEvents.values()).forEach((reading) => {
+    const cluster = clusters.find((items) =>
+      items.some((item) => Math.hypot(reading.x - item.x, reading.y - item.y) <= 64),
+    );
+
+    if (cluster) {
+      cluster.push(reading);
+      return;
+    }
+
+    clusters.push([reading]);
+  });
+
+  return clusters
+    .map((cluster, index) => {
+      const frequency = cluster.length;
+      const averageRisk =
+        cluster.reduce((sum, reading) => sum + reading.fall_risk, 0) / Math.max(1, frequency);
+      const totalRisk = cluster.reduce((sum, reading) => sum + reading.fall_risk, 0) || 1;
+      const strongest = cluster.reduce(
+        (best, reading) => (reading.fall_risk > best.fall_risk ? reading : best),
+        cluster[0],
+      );
+
+      return {
+        id: `fall-frequency-${index}-${cluster.map((reading) => reading.alert_event_key ?? reading.timestamp).join("-")}`,
+        x: cluster.reduce((sum, reading) => sum + reading.x * reading.fall_risk, 0) / totalRisk,
+        y: cluster.reduce((sum, reading) => sum + reading.y * reading.fall_risk, 0) / totalRisk,
+        radius: clamp(42 + frequency * 14 + averageRisk * 0.18, 48, 96),
+        intensity: frequency >= 3 ? 88 : frequency === 2 ? 68 : 52,
+        room: strongest.room,
+        frequency,
+      };
+    })
+    .sort((a, b) => a.frequency - b.frequency)
+    .slice(-18);
 }
 
 export function buildMetrics(readings: SensorReading[]): MonitoringMetrics {

@@ -79,6 +79,7 @@ export default function MainDashboardPage() {
               detail="ใน 24 ชม."
               subDetail={nearFallDetail}
               max={10}
+              showProgress={false}
             />
           </div>
 

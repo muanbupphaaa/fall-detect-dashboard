@@ -64,6 +64,7 @@ export interface HeatPoint {
   radius: number;
   intensity: number;
   room: RoomName;
+  frequency?: number;
 }
 
 export interface PathPoint {
