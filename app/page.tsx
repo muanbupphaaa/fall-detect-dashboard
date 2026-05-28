@@ -6,8 +6,6 @@ import { LiveMonitoringBadge } from "@/components/LiveMonitoringBadge";
 import { RealtimeAlertPanel } from "@/components/RealtimeAlertPanel";
 import { RiskRoomSummaryCard } from "@/components/RiskRoomSummaryCard";
 import { RiskScoreCard } from "@/components/RiskScoreCard";
-import { MobilityTrendChart } from "@/components/charts/MobilityTrendChart";
-import { StabilityChart } from "@/components/charts/StabilityChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMonitoringStore } from "@/store/monitoring-store";
 import { formatClock } from "@/lib/utils";
@@ -18,7 +16,6 @@ export default function MainDashboardPage() {
     metrics,
     readings,
     roomRisks,
-    trendData,
   } = useMonitoringStore();
 
   const topRooms = [...roomRisks].sort((a, b) => b.risk - a.risk).slice(0, 3);
@@ -92,11 +89,6 @@ export default function MainDashboardPage() {
           <RealtimeAlertPanel alerts={alerts.slice(0, 3)} />
 
         </div>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-2">
-        <MobilityTrendChart data={trendData} />
-        <StabilityChart data={trendData} />
       </section>
     </div>
   );
