@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Bath, BedDouble, ChefHat, DoorOpen, Sofa, Trees, Waves } from "lucide-react";
 import { FootstepTrail } from "@/components/floorplan/FootstepTrail";
+import { HeatAlertMarker } from "@/components/floorplan/HeatAlertMarker";
 import { HeatmapOverlay } from "@/components/floorplan/HeatmapOverlay";
-import { NearFallMarker } from "@/components/floorplan/NearFallMarker";
 import { rooms } from "@/data/floorplan";
 import { RoomName } from "@/lib/types";
 import { cn, riskColor } from "@/lib/utils";
@@ -119,7 +119,6 @@ export function CondoFloorplanMap({
     typeof playbackIndex === "number"
       ? readings[Math.min(playbackIndex, readings.length - 1)] ?? livePosition
       : livePosition;
-  const nearFalls = readings.filter((reading) => reading.near_fall).slice(compact ? -2 : -4);
   const visibleHeatPoints = useMemo(
     () =>
       heatPoints
@@ -127,6 +126,10 @@ export function CondoFloorplanMap({
         .filter((point, index, all) => index === all.findIndex((item) => item.id === point.id))
         .slice(compact ? -14 : -22),
     [compact, heatPoints],
+  );
+  const redHeatPoints = useMemo(
+    () => visibleHeatPoints.filter((point) => point.intensity >= 82),
+    [visibleHeatPoints],
   );
   const liveFootstepPath = useMemo(
     () =>
@@ -235,8 +238,8 @@ export function CondoFloorplanMap({
         <HeatmapOverlay points={visibleHeatPoints} />
         <ArchitecturalDetails />
         <FootstepTrail path={liveFootstepPath} compact={compact} followLivePath />
-        {nearFalls.map((reading) => (
-          <NearFallMarker key={reading.timestamp} reading={reading} />
+        {redHeatPoints.map((point) => (
+          <HeatAlertMarker key={point.id} point={point} />
         ))}
 
         {rooms.map((room) => (
